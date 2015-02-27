@@ -120,7 +120,7 @@ abstract class AbstractBuildFileSpec {
           public FileVisitResult visitFileFailed(
               Path file, IOException exc) throws IOException {
             if (exc instanceof FileSystemLoopException) {
-              LOG.error("Filesystem cycle detected at " + ((FileSystemLoopException) exc).getFile());
+              LOG.debug("Filesystem cycle detected at " + ((FileSystemLoopException) exc).getFile());
               return FileVisitResult.CONTINUE;
             }
             

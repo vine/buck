@@ -82,10 +82,13 @@ import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.java.JavaBinaryDescription;
 import com.facebook.buck.java.JavaBuckConfig;
 import com.facebook.buck.java.JavaLibraryDescription;
+import com.facebook.buck.java.ScalaLibraryDescription;
 import com.facebook.buck.java.JavaTestDescription;
+import com.facebook.buck.java.ScalaTestDescription;
 import com.facebook.buck.java.JavacOptions;
 import com.facebook.buck.java.KeystoreDescription;
 import com.facebook.buck.java.PrebuiltJarDescription;
+import com.facebook.buck.java.ScalacOptions;
 import com.facebook.buck.js.AndroidReactNativeLibraryDescription;
 import com.facebook.buck.js.IosReactNativeLibraryDescription;
 import com.facebook.buck.js.ReactNativeBuckConfig;
@@ -395,6 +398,14 @@ public class KnownBuildRuleTypes {
 
     InferBuckConfig inferBuckConfig = new InferBuckConfig(config);
 
+    ScalacOptions scalacOptions = ScalacOptions.builder()
+        .setScalacPath(config.getSourcePath("scala", "compiler"))
+        .setLibraryDep(config.getBuildTarget("scala", "library"))
+        .setProductionBuild(config.getBooleanValue("scala", "production", false))
+        .setVerbose(config.getBooleanValue("scala", "verbose", false))
+        .setExtraArguments(config.getListWithoutComments("scala", "extra_args"))
+        .build();
+
     CxxBinaryDescription cxxBinaryDescription =
         new CxxBinaryDescription(
             cxxBuckConfig,
@@ -484,12 +495,14 @@ public class KnownBuildRuleTypes {
     builder.register(new GwtBinaryDescription());
     builder.register(new IosReactNativeLibraryDescription(reactNativeBuckConfig));
     builder.register(new JavaBinaryDescription(defaultJavacOptions, defaultCxxPlatform));
+    builder.register(new ScalaLibraryDescription(scalacOptions));
     builder.register(new JavaLibraryDescription(defaultJavacOptions));
     builder.register(
         new JavaTestDescription(
             defaultJavacOptions,
             testRuleTimeoutMs,
             defaultCxxPlatform));
+    builder.register(new ScalaTestDescription(scalacOptions, testRuleTimeoutMs, defaultCxxPlatform));
     builder.register(new KeystoreDescription());
     builder.register(new NdkLibraryDescription(ndkVersion, ndkCxxPlatforms));
     OCamlBuckConfig ocamlBuckConfig = new OCamlBuckConfig(platform, config);
