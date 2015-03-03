@@ -40,6 +40,7 @@ public class PexStepTest {
         /* modules */ ImmutableMap.<Path, Path>of(),
         /* resources */ ImmutableMap.<Path, Path>of(),
         /* nativeLibraries */ ImmutableMap.<Path, Path>of(),
+        /* packages */ ImmutableList.<Path>of(),
         /* zipSafe */ true);
     assertEquals(
         ImmutableList.of("/usr/local/bin/python", "pex.py",
@@ -60,6 +61,7 @@ public class PexStepTest {
         /* modules */ ImmutableMap.<Path, Path>of(),
         /* resources */ ImmutableMap.<Path, Path>of(),
         /* nativeLibraries */ ImmutableMap.<Path, Path>of(),
+        /* packages */ ImmutableList.<Path>of(),
         /* zipSafe */ false);
     assertEquals(
         ImmutableList.of("/usr/local/bin/python", "pex.py",

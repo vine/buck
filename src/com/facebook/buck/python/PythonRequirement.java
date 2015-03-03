@@ -19,35 +19,42 @@ package com.facebook.buck.python;
 import static com.facebook.buck.rules.BuildableProperties.Kind.LIBRARY;
 
 import com.facebook.buck.cxx.CxxPlatform;
+import com.facebook.buck.rules.AbstractBuildRule;
+import com.facebook.buck.rules.BuildContext;
 import com.facebook.buck.rules.BuildRuleParams;
+import com.facebook.buck.rules.BuildableContext;
 import com.facebook.buck.rules.BuildableProperties;
-import com.facebook.buck.rules.NoopBuildRule;
 import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
+import com.facebook.buck.step.Step;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.nio.file.Path;
+import java.util.List;
 
-public class PythonLibrary extends NoopBuildRule implements PythonPackagable {
+import javax.annotation.Nullable;
+
+public class PythonRequirement extends AbstractBuildRule implements PythonPackagable {
 
   private static final BuildableProperties OUTPUT_TYPE = new BuildableProperties(LIBRARY);
 
-  private final ImmutableMap<Path, SourcePath> srcs;
-  private final ImmutableMap<Path, SourcePath> resources;
-  private final Optional<Boolean> zipSafe;
+  private final List<SourcePath> srcs;
 
-  public PythonLibrary(
+  public PythonRequirement(
       BuildRuleParams params,
       SourcePathResolver resolver,
-      ImmutableMap<Path, SourcePath> srcs,
-      ImmutableMap<Path, SourcePath> resources,
-      Optional<Boolean> zipSafe) {
+      List<SourcePath> srcs) {
     super(params, resolver);
     this.srcs = srcs;
-    this.resources = resources;
-    this.zipSafe = zipSafe;
+  }
+
+  @Nullable
+  @Override
+  public Path getPathToOutputFile() {
+    return null;
   }
 
   /**
@@ -56,20 +63,23 @@ public class PythonLibrary extends NoopBuildRule implements PythonPackagable {
   @Override
   public PythonPackageComponents getPythonPackageComponents(CxxPlatform cxxPlatform) {
     return PythonPackageComponents.of(
-        srcs,
-        resources,
         ImmutableMap.<Path, SourcePath>of(),
-        ImmutableSet.<SourcePath>of(),
-        zipSafe);
+        ImmutableMap.<Path, SourcePath>of(),
+        ImmutableMap.<Path, SourcePath>of(),
+        ImmutableSet.copyOf(srcs),
+        Optional.<Boolean>absent());
+  }
+
+  @Override
+  public ImmutableList<Step> getBuildSteps(
+      BuildContext context,
+      BuildableContext buildableContext) {
+    return ImmutableList.of();
   }
 
   @Override
   public BuildableProperties getProperties() {
     return OUTPUT_TYPE;
-  }
-
-  public ImmutableMap<Path, SourcePath> getSrcs() {
-    return srcs;
   }
 
 }
