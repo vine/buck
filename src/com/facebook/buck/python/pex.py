@@ -118,6 +118,11 @@ def main():
             # NOTE(agallagher): see rationale above.
             pex_builder.add_resource(dereference_symlinks(src), dst)
 
+        # Add resources listed in the manifest.
+        for dst, src in manifest['nativeLibraries'].iteritems():
+            # NOTE(agallagher): see rationale above.
+            pex_builder.add_resource(dereference_symlinks(src), dst)
+
         # Add requirements listed in the manifest.
         for req in manifest.get('requirements', []):
             pex_builder.add_dist_location(req)
