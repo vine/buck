@@ -48,7 +48,7 @@ public class PythonBuckConfig {
       Paths.get(
           System.getProperty(
               "buck.path_to_pex",
-              "src/com/facebook/buck/python/pex.py"))
+              "src/com/facebook/buck/python/make_pex.py"))
           .toAbsolutePath();
 
 

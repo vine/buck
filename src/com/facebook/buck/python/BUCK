@@ -78,11 +78,11 @@ python_library(
 )
 
 python_binary(
-  name = 'pex',
-  main = 'pex.py',
+  name = 'make_pex',
+  main = 'make_pex.py',
   deps = [
     ':pexlib',
-    '//third-party/py/twitter-commons/src/python:twitter-commons',
+    '//third-party/py/pex:pex',
   ],
   visibility = [
     'PUBLIC',

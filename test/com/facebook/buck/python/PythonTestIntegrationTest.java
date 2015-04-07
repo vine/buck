@@ -46,7 +46,7 @@ public class PythonTestIntegrationTest {
         Paths.get("src/com/facebook/buck/python/__test_main__.py").toAbsolutePath().toString());
     props.setProperty(
         "buck.path_to_pex",
-        Paths.get("src/com/facebook/buck/python/pex.py").toAbsolutePath().toString());
+        Paths.get("src/com/facebook/buck/python/make_pex.py").toAbsolutePath().toString());
 
     workspace = TestDataHelper.createProjectWorkspaceForScenario(
         this, "python_test", tmp);

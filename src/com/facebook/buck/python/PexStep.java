@@ -85,7 +85,7 @@ public class PexStep extends ShellStep {
 
   @Override
   public String getShortName() {
-    return "pex";
+    return "make_pex";
   }
 
   /** Return the manifest as a JSON blob to write to the pex processes stdin.

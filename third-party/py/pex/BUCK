@@ -1,0 +1,6 @@
+python_library(
+    name='pex',
+    srcs=glob(['pex/**/*.py']),
+    base_module='pex',
+    visibility=['PUBLIC'],
+)
