@@ -33,13 +33,14 @@ import com.facebook.buck.rules.Tool;
 import com.facebook.buck.step.Step;
 import com.facebook.buck.step.fs.MakeCleanDirectoryStep;
 import com.facebook.buck.step.fs.MkdirStep;
+import com.facebook.buck.step.fs.RmStep;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 
 import java.nio.file.Path;
 
-public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps {
+public class PythonPexBinary extends PythonBinary implements HasRuntimeDeps {
 
   private static final BuildableProperties OUTPUT_TYPE = new BuildableProperties(PACKAGING);
 
@@ -54,9 +55,12 @@ public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps
   private final PythonPackageComponents components;
   @AddToRuleKey
   private final PythonEnvironment pythonEnvironment;
+  @AddToRuleKey
+  private final PexStep.PexStyle pexStyle;
+
   private final ImmutableSortedSet<BuildRule> runtimeDeps;
 
-  protected PythonPackagedBinary(
+  protected PythonPexBinary(
       BuildRuleParams params,
       SourcePathResolver resolver,
       PythonPlatform pythonPlatform,
@@ -64,6 +68,7 @@ public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps
       ImmutableList<String> buildArgs,
       Tool pathToPexExecuter,
       String pexExtension,
+      PexStep.PexStyle pexStyle,
       PythonEnvironment pythonEnvironment,
       String mainModule,
       PythonPackageComponents components,
@@ -71,6 +76,7 @@ public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps
     super(params, resolver, pythonPlatform, mainModule, components, pexExtension);
     this.builder = builder;
     this.buildArgs = buildArgs;
+    this.pexStyle = pexStyle;
     this.pathToPexExecuter = pathToPexExecuter;
     this.pythonEnvironment = pythonEnvironment;
     this.mainModule = mainModule;
@@ -101,6 +107,9 @@ public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps
     // Make sure the parent directory exists.
     steps.add(new MkdirStep(getProjectFilesystem(), binPath.getParent()));
 
+    // Delete any other pex that was there (when switching between pex styles).
+    steps.add(new RmStep(getProjectFilesystem(), binPath, /* force */ true, /* recurse */ true));
+
     Path workingDirectory = BuildTargets.getGenPath(
         getBuildTarget(), "__%s__working_directory");
     steps.add(new MakeCleanDirectoryStep(getProjectFilesystem(), workingDirectory));
@@ -115,6 +124,7 @@ public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps
                 .addAll(buildArgs)
                 .build(),
             pythonEnvironment.getPythonPath(),
+            pythonEnvironment.getPythonVersion(),
             workingDirectory,
             binPath,
             mainModule,
@@ -123,7 +133,8 @@ public class PythonPackagedBinary extends PythonBinary implements HasRuntimeDeps
             getResolver().getMappedPaths(components.getNativeLibraries()),
             ImmutableSet.copyOf(
                 getResolver().deprecatedAllPaths(components.getPrebuiltLibraries())),
-            components.isZipSafe().or(true)));
+            components.isZipSafe().or(true),
+            pexStyle));
 
     // Record the executable package for caching.
     buildableContext.recordArtifact(getBinPath());

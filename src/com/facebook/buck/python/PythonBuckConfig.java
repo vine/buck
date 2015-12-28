@@ -46,8 +46,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
@@ -57,9 +55,6 @@ public class PythonBuckConfig {
 
   private static final String SECTION = "python";
   private static final String PYTHON_PLATFORM_SECTION_PREFIX = "python#";
-
-  private static final Pattern PYTHON_VERSION_REGEX =
-      Pattern.compile(".*?(\\wy(thon|run) \\d+\\.\\d+).*");
 
   // Prefer "python2" where available (Linux), but fall back to "python" (Mac).
   private static final ImmutableList<String> PYTHON_INTERPRETER_NAMES =
@@ -219,7 +214,7 @@ public class PythonBuckConfig {
     }
     return new VersionedTool(
         Paths.get(getPythonInterpreter()),
-        ImmutableList.of(DEFAULT_PATH_TO_PEX.toString()),
+        ImmutableList.of("-S", DEFAULT_PATH_TO_PEX.toString()),
         "pex",
         BuckVersion.getVersion());
   }
@@ -240,10 +235,22 @@ public class PythonBuckConfig {
   private static PythonVersion getPythonVersion(ProcessExecutor processExecutor, Path pythonPath)
       throws InterruptedException {
     try {
+      // Taken from pex's interpreter.py.
+      String versionId = "import sys\n" +
+          "\n" +
+          "if hasattr(sys, 'pypy_version_info'):\n" +
+          "  subversion = 'PyPy'\n" +
+          "elif sys.platform.startswith('java'):\n" +
+          "  subversion = 'Jython'\n" +
+          "else:\n" +
+          "  subversion = 'CPython'\n" +
+          "\n" +
+          "print('%s %s %s %s' % (subversion, sys.version_info[0], sys.version_info[1], sys.version_info[2]))\n";
+
       ProcessExecutor.Result versionResult = processExecutor.launchAndExecute(
-          ProcessExecutorParams.builder().addCommand(pythonPath.toString(), "-V").build(),
-          EnumSet.of(ProcessExecutor.Option.EXPECTING_STD_ERR),
-          /* stdin */ Optional.<String>absent(),
+          ProcessExecutorParams.builder().addCommand(pythonPath.toString(), "-").build(),
+          EnumSet.of(ProcessExecutor.Option.EXPECTING_STD_OUT),
+          Optional.of(versionId),
           /* timeOutMs */ Optional.<Long>absent(),
           /* timeoutHandler */ Optional.<Function<Process, Void>>absent());
       return extractPythonVersion(pythonPath, versionResult);
@@ -261,18 +268,25 @@ public class PythonBuckConfig {
       Path pythonPath,
       ProcessExecutor.Result versionResult) {
     if (versionResult.getExitCode() == 0) {
+      // The first line is the compatibility version; the rest is interpreter-specific.
+      // The compatibilty version should match PythonIdentity.from_id_string.
       String versionString = CharMatcher.WHITESPACE.trimFrom(
           CharMatcher.WHITESPACE.trimFrom(versionResult.getStderr().get()) +
-          CharMatcher.WHITESPACE.trimFrom(versionResult.getStdout().get())
-              .replaceAll("\u001B\\[[;\\d]*m", ""));
-      Matcher matcher = PYTHON_VERSION_REGEX.matcher(versionString.split("\\r?\\n")[0]);
-      if (!matcher.matches()) {
+              CharMatcher.WHITESPACE.trimFrom(versionResult.getStdout().get())
+                  .replaceAll("\u001B\\[[;\\d]*m", ""));
+      String[] versionLines = versionString.split("\\r?\\n");
+
+      String[] compatibilityVersion = versionLines[0].split(" ");
+      if (compatibilityVersion.length != 4) {
         throw new HumanReadableException(
-            "`%s -V` returned an invalid version string %s",
+            "`%s -` returned an invalid version string %s",
             pythonPath,
             versionString);
       }
-      return PythonVersion.of(matcher.group(1));
+
+      return PythonVersion.of(
+          compatibilityVersion[0],
+          compatibilityVersion[1] + "." + compatibilityVersion[2] + "." + compatibilityVersion[3]);
     } else {
       throw new HumanReadableException(versionResult.getStderr().get());
     }
@@ -286,6 +300,7 @@ public class PythonBuckConfig {
   public enum PackageStyle {
     STANDALONE,
     INPLACE,
+    PEX_INPLACE,
   }
 
 }

@@ -30,7 +30,6 @@ import com.facebook.buck.testutil.integration.ProjectWorkspace.ProcessResult;
 import com.facebook.buck.testutil.integration.TestDataHelper;
 import com.facebook.buck.util.ProcessExecutor;
 import com.facebook.buck.util.VersionStringComparator;
-import com.google.common.base.Splitter;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -91,18 +90,17 @@ public class PythonTestIntegrationTest {
 
   private void assumePythonVersionIsAtLeast(String expectedVersion, String message)
       throws InterruptedException {
-    PythonVersion pythonVersion =
+    PythonVersion actualVersion =
         new PythonBuckConfig(FakeBuckConfig.builder().build(), new ExecutableFinder())
             .getPythonEnvironment(new ProcessExecutor(new TestConsole()))
             .getPythonVersion();
-    String actualVersion = Splitter.on(' ').splitToList(pythonVersion.getVersionString()).get(1);
     assumeTrue(
         String.format(
             "Needs at least Python-%s, but found Python-%s: %s",
             expectedVersion,
             actualVersion,
             message),
-        new VersionStringComparator().compare(actualVersion, expectedVersion) >= 0);
+        new VersionStringComparator().compare(actualVersion.getVersionString(), expectedVersion) >= 0);
   }
 
 }

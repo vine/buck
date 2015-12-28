@@ -25,11 +25,22 @@ import org.immutables.value.Value;
 abstract class AbstractPythonVersion {
 
   @Value.Parameter
-  public abstract String getVersionString();
+  public abstract String getInterpreterName();
+
+  @Value.Parameter
+  public abstract String getVersionString();  // X.Y.Z
+
+  public String getPexCompatibilityVersion() {
+    StringBuilder sb = new StringBuilder(20);
+    sb.append(getInterpreterName());
+    sb.append(" ");
+    sb.append(getVersionString().replace('.', ' '));
+    return sb.toString();
+  }
 
   @Override
   public String toString() {
-    return getVersionString();
+    return getInterpreterName() + " " + getVersionString();
   }
 
 }

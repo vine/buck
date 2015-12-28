@@ -29,7 +29,7 @@ import com.facebook.buck.cli.FakeBuckConfig;
 import com.facebook.buck.cxx.CxxBuckConfig;
 import com.facebook.buck.cxx.DefaultCxxPlatforms;
 import com.facebook.buck.event.BuckEventListener;
-import com.facebook.buck.io.FakeExecutableFinder;
+import com.facebook.buck.io.ExecutableFinder;
 import com.facebook.buck.io.ProjectFilesystem;
 import com.facebook.buck.testutil.ParameterizedTests;
 import com.facebook.buck.testutil.integration.DebuggableTemporaryFolder;
@@ -40,7 +40,6 @@ import com.facebook.buck.util.environment.Architecture;
 import com.facebook.buck.util.environment.Platform;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.martiansoftware.nailgun.NGContext;
@@ -112,7 +111,8 @@ public class PythonBinaryIntegrationTest {
     Files.createSymbolicLink(
         link,
         workspace.getPath(Splitter.on(" ").splitToList(output).get(1)).toAbsolutePath());
-    ProcessExecutor.Result result = workspace.runCommand(link.toString());
+    ProcessExecutor.Result result = workspace.runCommand(
+        getPythonBuckConfig().getPythonInterpreter(), link.toString());
     assertThat(
         result.getStdout().or("") + result.getStderr().or(""),
         result.getExitCode(),
@@ -275,10 +275,10 @@ public class PythonBinaryIntegrationTest {
             new ProjectFilesystem(tmp.getRootPath()),
             Architecture.detect(),
             Platform.detect(),
-            ImmutableMap.<String, String>of());
+            ImmutableMap.copyOf(System.getenv()));
     return new PythonBuckConfig(
         buckConfig,
-        new FakeExecutableFinder(ImmutableList.<Path>of()));
+        new ExecutableFinder());
   }
 
 }

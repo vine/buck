@@ -215,11 +215,14 @@ public class PythonBinaryDescription implements
             mainModule,
             components);
 
+      case PEX_INPLACE:
       case STANDALONE:
         ImmutableSortedSet<BuildRule> componentDeps =
             PythonUtil.getDepsFromComponents(pathResolver, components);
         Tool pexTool = pythonBuckConfig.getPexTool(resolver);
-        return new PythonPackagedBinary(
+        PexStep.PexStyle pexStyle = pythonBuckConfig.getPackageStyle() == PythonBuckConfig.PackageStyle.PEX_INPLACE ?
+            PexStep.PexStyle.DIRECTORY : PexStep.PexStyle.FILE;
+        return new PythonPexBinary(
             params.copyWithDeps(
                 Suppliers.ofInstance(
                     ImmutableSortedSet.<BuildRule>naturalOrder()
@@ -233,6 +236,7 @@ public class PythonBinaryDescription implements
             buildArgs,
             pythonBuckConfig.getPathToPexExecuter(resolver).or(pythonPlatform.getEnvironment()),
             pythonBuckConfig.getPexExtension(),
+            pexStyle,
             pythonPlatform.getEnvironment(),
             mainModule,
             components,
@@ -322,7 +326,7 @@ public class PythonBinaryDescription implements
       Arg constructorArg) {
     ImmutableList.Builder<BuildTarget> targets = ImmutableList.builder();
 
-    if (pythonBuckConfig.getPackageStyle() == PythonBuckConfig.PackageStyle.STANDALONE) {
+    if (pythonBuckConfig.getPackageStyle() != PythonBuckConfig.PackageStyle.INPLACE) {
       targets.addAll(pythonBuckConfig.getPexTarget().asSet());
     }
 

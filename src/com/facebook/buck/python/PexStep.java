@@ -32,6 +32,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class PexStep extends ShellStep {
+  enum PexStyle {
+    DIRECTORY,  // Produce a standalone directory that can be run via `python dir` (faster)
+    FILE,       // Produce a standalone .pex file that contains the directory above (slower)
+  }
+
   private static final String SRC_ZIP = ".src.zip";
 
   private final ProjectFilesystem filesystem;
@@ -42,7 +47,7 @@ public class PexStep extends ShellStep {
   // The PEX builder command prefix.
   private final ImmutableList<String> commandPrefix;
 
-  // The path to the executable to create.
+  // The path to the executable/directory to create.
   private final Path destination;
 
   // The main module that begins execution in the PEX.
@@ -53,6 +58,7 @@ public class PexStep extends ShellStep {
 
   // The map of resources to include in the PEX.
   private final ImmutableMap<Path, Path> resources;
+  private final PythonVersion pythonVersion;
   private final Path pythonPath;
   private final Path tempDir;
 
@@ -62,6 +68,7 @@ public class PexStep extends ShellStep {
   // The list of prebuilt python libraries to add to the PEX.
   private final ImmutableSet<Path> prebuiltLibraries;
 
+  private final PexStyle style;
   private final boolean zipSafe;
 
   public PexStep(
@@ -69,6 +76,7 @@ public class PexStep extends ShellStep {
       ImmutableMap<String, String> environment,
       ImmutableList<String> commandPrefix,
       Path pythonPath,
+      PythonVersion pythonVersion,
       Path tempDir,
       Path destination,
       String entry,
@@ -76,13 +84,15 @@ public class PexStep extends ShellStep {
       ImmutableMap<Path, Path> resources,
       ImmutableMap<Path, Path> nativeLibraries,
       ImmutableSet<Path> prebuiltLibraries,
-      boolean zipSafe) {
+      boolean zipSafe,
+      PexStyle style) {
     super(filesystem.getRootPath());
 
     this.filesystem = filesystem;
     this.environment = environment;
     this.commandPrefix = commandPrefix;
     this.pythonPath = pythonPath;
+    this.pythonVersion = pythonVersion;
     this.tempDir = tempDir;
     this.destination = destination;
     this.entry = entry;
@@ -91,6 +101,7 @@ public class PexStep extends ShellStep {
     this.nativeLibraries = nativeLibraries;
     this.prebuiltLibraries = prebuiltLibraries;
     this.zipSafe = zipSafe;
+    this.style = style;
   }
 
   @Override
@@ -148,11 +159,17 @@ public class PexStep extends ShellStep {
     builder.addAll(commandPrefix);
     builder.add("--python");
     builder.add(pythonPath.toString());
+    builder.add("--python-version");
+    builder.add(pythonVersion.getPexCompatibilityVersion());
     builder.add("--entry-point");
     builder.add(entry);
 
     if (!zipSafe) {
       builder.add("--no-zip-safe");
+    }
+
+    if (style == PexStyle.DIRECTORY) {
+      builder.add("--directory");
     }
 
     builder.add(destination.toString());

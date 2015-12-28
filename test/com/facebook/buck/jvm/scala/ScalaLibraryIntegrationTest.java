@@ -53,7 +53,7 @@ public class ScalaLibraryIntegrationTest {
   public void shouldCompileScalaClass() throws Exception {
     assertThat(
         workspace.runBuckCommand(
-            "run", "-v", "3",
+            "run", "-v", "9",
             "--config", "scala.compiler=//:scala-compiler",
             "//:bin", "--", "world!").assertSuccess().getStdout(),
         Matchers.containsString("Hello WORLD!"));

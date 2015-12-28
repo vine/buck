@@ -319,7 +319,7 @@ public class PythonTestDescription implements
       Arg constructorArg) {
     ImmutableList.Builder<BuildTarget> targets = ImmutableList.builder();
 
-    if (pythonBuckConfig.getPackageStyle() == PythonBuckConfig.PackageStyle.STANDALONE) {
+    if (pythonBuckConfig.getPackageStyle() != PythonBuckConfig.PackageStyle.INPLACE) {
       targets.addAll(pythonBuckConfig.getPexTarget().asSet());
     }
 

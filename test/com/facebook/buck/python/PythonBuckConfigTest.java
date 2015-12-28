@@ -69,8 +69,8 @@ public class PythonBuckConfigTest {
     PythonVersion version =
         PythonBuckConfig.extractPythonVersion(
             Paths.get("usr", "bin", "python"),
-            new ProcessExecutor.Result(0, "", "Python 2.7.5\n"));
-    assertEquals("Python 2.7", version.toString());
+            new ProcessExecutor.Result(0, "", "CPython 2 7 5\n"));
+    assertEquals("CPython 2.7.5", version.toString());
   }
 
   @Test
@@ -264,34 +264,18 @@ public class PythonBuckConfigTest {
     PythonVersion version =
         PythonBuckConfig.extractPythonVersion(
             Paths.get("non", "important", "path"),
-            new ProcessExecutor.Result(0, "", "pyrun 2.7.6 (release 2.0.0)\n"));
-    assertEquals("pyrun 2.7", version.toString());
+            new ProcessExecutor.Result(0, "", "CPython 2 7 6\n"));
+    assertEquals("CPython 2.7.6", version.toString());
   }
 
   @Test
-  public void testGetPypyVersion() throws Exception {
-    String pypyOutput =
-        "Python 2.7.10 (850edf14b2c75573720f59e95767335fb1affe55, Oct 30 2015, 00:18:28)\n" +
-        "[PyPy 4.0.0 with GCC 4.2.1 Compatible Apple LLVM 7.0.0 (clang-700.1.76)]\n";
-
+  public void testGetWindowsVersion() throws Exception {
+    String pypyOutput = "CPython 2 7 10\r\n";
     PythonVersion version =
         PythonBuckConfig.extractPythonVersion(
             Paths.get("non", "important", "path"),
             new ProcessExecutor.Result(0, "", pypyOutput));
-    assertThat(version.toString(), Matchers.equalTo("Python 2.7"));
-  }
-
-  @Test
-  public void testGetPypyWindowsVersion() throws Exception {
-    String pypyOutput =
-        "Python 2.7.10 (850edf14b2c75573720f59e95767335fb1affe55, Oct 30 2015, 00:18:28)\r\n" +
-        "[PyPy 4.0.0 with GCC 4.2.1 Compatible Apple LLVM 7.0.0 (ok that was a lie)]\r\n";
-
-    PythonVersion version =
-        PythonBuckConfig.extractPythonVersion(
-            Paths.get("non", "important", "path"),
-            new ProcessExecutor.Result(0, "", pypyOutput));
-    assertThat(version.toString(), Matchers.equalTo("Python 2.7"));
+    assertThat(version.toString(), Matchers.equalTo("CPython 2.7.10"));
   }
 
   @Test
@@ -305,7 +289,7 @@ public class PythonBuckConfigTest {
     assertThat(
         config.getDefaultPythonPlatform(
             new FakeProcessExecutor(
-                Functions.constant(new FakeProcess(0, "Python 2.7.5", "")),
+                Functions.constant(new FakeProcess(0, "CPython 2 7 5", "")),
                 new TestConsole()))
             .getCxxLibrary(),
         Matchers.equalTo(Optional.of(library)));

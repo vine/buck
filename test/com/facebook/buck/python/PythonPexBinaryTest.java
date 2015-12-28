@@ -54,7 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class PythonPackagedBinaryTest {
+public class PythonPexBinaryTest {
 
   private static final Tool PEX = new CommandTool.Builder().addArg("something").build();
 
@@ -70,7 +70,7 @@ public class PythonPackagedBinaryTest {
     ProjectFilesystem projectFilesystem = new FakeProjectFilesystem();
 
     // The top-level python binary that lists the above libraries as deps.
-    PythonBinary binary = new PythonPackagedBinary(
+    PythonBinary binary = new PythonPexBinary(
         new FakeBuildRuleParamsBuilder("//:bin").build(),
         resolver,
         PythonTestUtils.PYTHON_PLATFORM,
@@ -78,7 +78,8 @@ public class PythonPackagedBinaryTest {
         ImmutableList.<String>of(),
         new HashedFileTool(Paths.get("dummy_path_to_pex_runner")),
         ".pex",
-        new PythonEnvironment(Paths.get("fake_python"), PythonVersion.of("Python 2.7")),
+        PexStep.PexStyle.FILE,
+        new PythonEnvironment(Paths.get("fake_python"), PythonVersion.of("CPython", "2.7.11")),
         "main",
         PythonPackageComponents.of(
             ImmutableMap.<Path, SourcePath>of(

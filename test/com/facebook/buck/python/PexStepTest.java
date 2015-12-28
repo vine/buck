@@ -43,6 +43,7 @@ import java.util.Map;
 public class PexStepTest {
 
   private static final Path PYTHON_PATH = Paths.get("/usr/local/bin/python");
+  private static final PythonVersion PYTHON_VERSION = PythonVersion.of("CPython", "2.6.9");
   private static final ImmutableMap<String, String> PEX_ENVIRONMENT = ImmutableMap.of();
   private static final ImmutableList<String> PEX_COMMAND = ImmutableList.of();
   private static final Path TEMP_PATH = Paths.get("/tmp/");
@@ -67,6 +68,7 @@ public class PexStepTest {
             PEX_ENVIRONMENT,
             PEX_COMMAND,
             PYTHON_PATH,
+            PYTHON_VERSION,
             TEMP_PATH,
             DEST_PATH,
             ENTRY_POINT,
@@ -74,14 +76,40 @@ public class PexStepTest {
             RESOURCES,
             NATIVE_LIBRARIES,
             PREBUILT_LIBRARIES,
-            /* zipSafe */ true);
+            /* zipSafe */ true,
+            PexStep.PexStyle.FILE);
     String command = Joiner.on(" ").join(
         step.getShellCommandInternal(TestExecutionContext.newInstance()));
 
     assertThat(command, startsWith(Joiner.on(" ").join(PEX_COMMAND)));
     assertThat(command, containsString("--python " + PYTHON_PATH));
+    assertThat(command, containsString("--python-version " + PYTHON_VERSION.getPexCompatibilityVersion()));
     assertThat(command, containsString("--entry-point " + ENTRY_POINT));
     assertThat(command, endsWith(" " + DEST_PATH));
+  }
+
+  @Test
+  public void testCommandLineDirectory() {
+    PexStep step =
+        new PexStep(
+            new FakeProjectFilesystem(),
+            PEX_ENVIRONMENT,
+            PEX_COMMAND,
+            PYTHON_PATH,
+            PYTHON_VERSION,
+            TEMP_PATH,
+            DEST_PATH,
+            ENTRY_POINT,
+            MODULES,
+            RESOURCES,
+            NATIVE_LIBRARIES,
+            PREBUILT_LIBRARIES,
+            /* zipSafe */ false,
+            PexStep.PexStyle.DIRECTORY);
+    String command = Joiner.on(" ").join(
+        step.getShellCommandInternal(TestExecutionContext.newInstance()));
+
+    assertThat(command, containsString("--directory"));
   }
 
   @Test
@@ -92,6 +120,7 @@ public class PexStepTest {
             PEX_ENVIRONMENT,
             PEX_COMMAND,
             PYTHON_PATH,
+            PYTHON_VERSION,
             TEMP_PATH,
             DEST_PATH,
             ENTRY_POINT,
@@ -99,7 +128,8 @@ public class PexStepTest {
             RESOURCES,
             NATIVE_LIBRARIES,
             PREBUILT_LIBRARIES,
-            /* zipSafe */ false);
+            /* zipSafe */ false,
+            PexStep.PexStyle.FILE);
     String command = Joiner.on(" ").join(
         step.getShellCommandInternal(TestExecutionContext.newInstance()));
 
@@ -115,6 +145,7 @@ public class PexStepTest {
             PEX_ENVIRONMENT,
             PEX_COMMAND,
             PYTHON_PATH,
+            PYTHON_VERSION,
             TEMP_PATH,
             DEST_PATH,
             ENTRY_POINT,
@@ -122,7 +153,8 @@ public class PexStepTest {
             RESOURCES,
             NATIVE_LIBRARIES,
             PREBUILT_LIBRARIES,
-            /* zipSafe */ true);
+            /* zipSafe */ true,
+            PexStep.PexStyle.FILE);
 
     Map<String, Object> args = new ObjectMapper().readValue(
         step.getStdin(TestExecutionContext.newInstance()).get(),
@@ -152,6 +184,7 @@ public class PexStepTest {
                 .add("--some", "--args")
                 .build(),
             PYTHON_PATH,
+            PYTHON_VERSION,
             TEMP_PATH,
             DEST_PATH,
             ENTRY_POINT,
@@ -159,7 +192,8 @@ public class PexStepTest {
             RESOURCES,
             NATIVE_LIBRARIES,
             PREBUILT_LIBRARIES,
-            /* zipSafe */ true);
+            /* zipSafe */ true,
+            PexStep.PexStyle.FILE);
     assertThat(
         step.getShellCommandInternal(TestExecutionContext.newInstance()),
         hasItems("--some", "--args"));
