@@ -214,7 +214,7 @@ public class PythonBuckConfig {
     }
     return new VersionedTool(
         Paths.get(getPythonInterpreter()),
-        ImmutableList.of("-S", DEFAULT_PATH_TO_PEX.toString()),
+        ImmutableList.of(DEFAULT_PATH_TO_PEX.toString()),
         "pex",
         BuckVersion.getVersion());
   }
