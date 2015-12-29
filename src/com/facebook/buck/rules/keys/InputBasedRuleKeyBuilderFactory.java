@@ -25,7 +25,6 @@ import com.facebook.buck.rules.SourcePath;
 import com.facebook.buck.rules.SourcePathResolver;
 import com.facebook.buck.util.cache.FileHashCache;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -34,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import javax.annotation.Nonnull;
@@ -128,12 +128,18 @@ public class InputBasedRuleKeyBuilderFactory
       if (inputHandling == InputHandling.HASH) {
         deps.add(pathResolver.getRule(sourcePath).asSet());
 
+        Path ideallyRelative;
         try {
-          setPath(
-              pathResolver.getAbsolutePath(sourcePath),
-              pathResolver.getRelativePath(sourcePath));
+          ideallyRelative = pathResolver.getRelativePath(sourcePath);
+        } catch (IllegalStateException e) {
+          // Expected relative path was absolute. Yay.
+          ideallyRelative = pathResolver.getAbsolutePath(sourcePath);
+        }
+        Path absolutePath = pathResolver.getAbsolutePath(sourcePath);
+        try {
+          setPath(absolutePath, ideallyRelative);
         } catch (IOException e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
       inputs.add(Collections.singleton(sourcePath));
